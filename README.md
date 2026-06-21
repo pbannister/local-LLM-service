@@ -1,4 +1,4 @@
-# Local LLM Provisioning & Benchmarking Suite
+# Local LLM Benchmarks
 
 The aim here is to benchmark a set of LLMs (Large Language Models) suitable for an **AMD Instinct MI25**.
 The script downloads the LLMs (as needed) and runs benchmarks. 
@@ -46,5 +46,5 @@ Options given to **llama-bench**:
 Note that **llama-bench** outputs results in Markdown format.
 Output from the run can be used almost directly.
 
-Output from individual benchmarks are stored in: ``$MODEL_HOME/benchmark_${model_name}.txt``
+Also output from individual benchmarks are stored in: ``${MODEL_HOME}/benchmark_${model_name}.txt``
 
