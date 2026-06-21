@@ -1,5 +1,10 @@
+hub
+save
+benchmark_*.txt
 llama3-8b  
 mistral-7b  
 qwen2.5-7b  
 qwen2.5-coder-7b  
 qwen25-coder-7b
+gemma-4-12b
+gpt-oss-20b

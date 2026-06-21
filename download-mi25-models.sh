@@ -1,82 +1,121 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-BASE_DIR="$HOME/models"
-mkdir -p "$BASE_DIR"
+MODEL_HOME="$HOME/models"
+mkdir -p "$MODEL_HOME"
 
-download_and_fix() {
-    local repo="$1"
-    local pattern="$2"
-    local outdir="$3"
+MODEL_REPO=(
+    "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+    "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" 
+    "Qwen/Qwen2.5-7B-Instruct-GGUF" 
+    "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF" 
+    "unsloth/gemma-4-12b-it-GGUF"
+    "unsloth/gpt-oss-20b-GGUF"
+)
+MODEL_FILES=(
+    "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+    "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf"
+    "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf"
+    "qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf qwen2.5-coder-7b-instruct-q4_k_m-00002-of-00002.gguf"
+    "gemma-4-12b-it-Q4_K_M.gguf"
+    "gpt-oss-20b-Q4_K_M.gguf"
+)
+MODEL_INTO=(
+    "$MODEL_HOME/mistral-7b"
+    "$MODEL_HOME/llama3-8b"
+    "$MODEL_HOME/qwen2.5-7b"
+    "$MODEL_HOME/qwen2.5-coder-7b"
+    "$MODEL_HOME/gemma-4-12b"
+    "$MODEL_HOME/gpt-oss-20b"
+) 
+MODEL_NAME=(
+    "Mistral-7B-Q4_K_M"
+    "Llama-3-8B-Q4_K_M"
+    "Qwen2.5-7B-Q4_K_M"
+    "Qwen2.5-Coder-7B-Q4_K_M"
+    "Gemma-4-12B-it-Q4_K_M"
+    "GPT-OSS-20B-Q4_K_M"
+)
 
-    echo "----------------------------------------"
-    echo "Downloading $pattern from $repo"
-    echo "----------------------------------------"
+model_download() {
+    local model_repo="${MODEL_REPO[$1]}"
+    local model_files="${MODEL_FILES[$1]}"
+    local model_into="${MODEL_INTO[$1]}"
 
-    mkdir -p "$outdir"
+    echo "
+----------------------------------------
+From     : $model_repo 
+Download : $model_files
+Into     : $model_into
+----------------------------------------"
 
-    hf download "$repo" \
-        --local-dir "$outdir" \
-        --include "$pattern"
+    mkdir -p "$model_into" || {
+        echo "ERROR cannot create directory: $model_into"
+        return 1
+    } 
+    (
+        cd "$model_into" || {
+            echo "ERROR cannot change directory to: $model_into"
+            return 1
+        }
+        for file in $model_files; do
+            echo "... download $file"
+            hf download "$model_repo" \
+                --local-dir "$model_into" \
+                --include "$file"
 
-    cd "$outdir"
-    local fname="$(basename "$pattern")"
-    if [ -L "$fname" ]; then
-        echo "Converting symlink to real file: $fname"
-        cp --dereference "$fname" "$fname.real"
-        mv "$fname.real" "$fname"
-    else
-        echo "File is already real: $fname"
-    fi
-
-    echo "Done: $outdir/$fname"
-    echo
+            if [ -L "$file" ]; then
+                echo "... converting symlink to hard link: $file"
+                target=$(readlink "$file")
+                rm "$file"
+                ln "$target" "$file"
+            else
+                echo "... file is already real: $file"
+            fi
+        done
+    )
 }
 
-# Mistral‑7B‑Instruct‑v0.2 (Q4_K_M)
-download_and_fix \
-    "TheBloke/Mistral-7B-Instruct-v0.2-GGUF" \
-    "mistral-7b-instruct-v0.2.Q4_K_M.gguf" \
-    "$BASE_DIR/mistral-7b"
+OPTIONS_LLAMA_BENCH="
+-p 512,2048,4096 
+-n 128 
+-ngl 99 
+-r 3
+"
 
-# Llama‑3‑8B‑Instruct (Q4_K_M)
-download_and_fix \
-    "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF" \
-    "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf" \
-    "$BASE_DIR/llama3-8b"
+model_benchmark() {
+    local model_path="${MODEL_INTO[$1]}/$(echo ${MODEL_FILES[$1]} | awk '{print $1}')"
+    local model_name="${MODEL_NAME[$1]}"
+    local model_out="$MODEL_HOME/benchmark_$model_name.txt"
 
-# Qwen2.5‑7B‑Instruct (Q4_K_M) — SHARDED
-download_and_fix \
-    "Qwen/Qwen2.5-7B-Instruct-GGUF" \
-    "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf" \
-    "$BASE_DIR/qwen2.5-7b"
+    echo "
+----------------------------------------
+Benchmark : $model_name
+Save to   : $model_out
+----------------------------------------"
 
-download_and_fix \
-    "Qwen/Qwen2.5-7B-Instruct-GGUF" \
-    "qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf" \
-    "$BASE_DIR/qwen2.5-7b"
+    # Run llama.cpp benchmark
+    (
+        set -x
+        llama-bench $OPTIONS_LLAMA_BENCH -m "$model_path"
+        
+    ) | tee "$model_out"
+}
 
-# Qwen2.5‑Coder‑7B‑Instruct (Q4_K_M) — SHARDED
-download_and_fix \
-    "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF" \
-    "qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf" \
-    "$BASE_DIR/qwen2.5-coder-7b"
+# Download models.
+model_download 0    # Mistral
+model_download 1    # Llama-3-8B
+model_download 2    # Qwen2.5-7B
+model_download 3    # Qwen2.5-Coder-7B
+model_download 4    # Gemma-4-12B
+model_download 5    # GPT-OSS-20B
 
-download_and_fix \
-    "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF" \
-    "qwen2.5-coder-7b-instruct-q4_k_m-00002-of-00002.gguf" \
-    "$BASE_DIR/qwen2.5-coder-7b"
-
-echo "----------------------------------------"
-echo "All models downloaded and symlinks fixed."
-echo "----------------------------------------"
-
-echo
-echo "Run commands:"
-echo "----------------------------------------"
-echo "llama cli -m $BASE_DIR/mistral-7b/mistral-7b-instruct-v0.2.Q4_K_M.gguf -p \"Test Mistral on MI25\""
-echo "llama cli -m $BASE_DIR/llama3-8b/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf -p \"Test Llama 3 on MI25\""
-echo "llama cli -m $BASE_DIR/qwen2.5-7b/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf -p \"Test Qwen2.5 on MI25\""
-echo "llama cli -m $BASE_DIR/qwen2.5-coder-7b/qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf -p \"Test Qwen2.5 Coder on MI25\""
-echo "----------------------------------------"
-
+model_benchmark 0   # Mistral
+model_benchmark 1   # Llama-3-8B
+model_benchmark 2   # Qwen2.5-7B
+model_benchmark 3   # Qwen2.5-Coder-7B
+model_benchmark 4   # Gemma-4-12B
+model_benchmark 5   # GPT-OSS-20B
+echo "
+----------------------------------------
+All models downloaded, symlinks fixed, and benchmarks completed.
+----------------------------------------"
