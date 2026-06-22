@@ -1,9 +1,42 @@
-# Local LLM Benchmarks
+# Local LLM 
 
-The aim here is to benchmark a set of LLMs (Large Language Models) suitable for an **AMD Instinct MI25**.
+Wanted to run LLMs (Large Language Models) on my local subnet.
+Did not want to send data to the cloud.
+Did not want to buy tokens, and incur unknown expense.
+The easy route would be to buy a well-supported high-end GPU, but did not want to spend that sort of money.
+
+A few years back, bought an old datacenter GPU (AMD Instinct MI25).
+As this particular GPU is trouble to use, the card is inexpensive.
+With 16GB of memory, this GPU is not small, and not the largest.
+
+Wanted to offer a service on my local subnet, with a selection of models.
+Once running ... found this works rather well.
+
+What follows is a setup particular to my purpose.
+You might want something different.
+
+## The Service - llama.cpp
+
+The main trick to get the MI25 working is to use **llama.cpp** compiled to use the **Vulcan** backend.
+(Ask an LLM how. Perhaps not Microsoft Copilot.)
+
+| file              | purpose   |
+| ----              | ----      |
+| **install.sh**    | Sets up a **systemd** service to run **llama.cpp** in "router" mode.  |
+| **config.ini**    | Contains the **llama.cpp** server configuration.                      |
+ 
+Note I am allowing *unsecured* connections (as my local subnet is secure).
+Again, this is specific to my purpose.
+
+On my local subnet, I can now connect a web browser to ``beast.lan:2001``.
+The web UI of **llama.cpp** is rather nice.
+
+## Benchmarks
+
+Aim was to benchmark a set of LLMs (Large Language Models) suitable for an **AMD Instinct MI25**.
 The script downloads the LLMs (as needed) and runs benchmarks. 
 
-## Usage
+### Usage
 
 First, determine what devices are seen by Vulcan.
 ```sh
@@ -18,7 +51,7 @@ Force Vulcan to use only the GPU we want to benchmark.
 $ GGML_VK_VISIBLE_DEVICES=1 bash download-mi25-models.sh 
 ```
 
-## Models
+### Models
 
 The **MI25** GPU has 16GB of memory, so models were selected to fit. 
 
@@ -33,7 +66,7 @@ Models are stored under ``$MODEL_HOME`` (the "$HOME/models" directory).
 | 4     | Gemma 4 12B IT            | gemma-4-12b-it-Q4_K_M.gguf            | $MODEL_HOME/gemma-4-12b       | 
 | 5     | GPT-OSS 20B               | gpt-oss-20b-Q4_K_M.gguf               | $MODEL_HOME/gpt-oss-20b2      |
 
-## llama-bench
+### llama-bench
 
 Options given to **llama-bench**:
 
