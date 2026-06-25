@@ -2,6 +2,8 @@
 BEGIN {
     have_download = 0
     have_benchmark = 0
+    n_models = 0
+    list_models[0] = ""
 }
 /^==== / {
     if (have_download) {
@@ -45,6 +47,8 @@ BEGIN {
     print "```"
     print $0
     print ""
+    n_models++
+    list_models[n_models] = "| " model_family " | " model_name model_spec " |"
 }
 /^[+] llama-bench / {
     print "### Benchmark - " model_family
@@ -73,4 +77,11 @@ BEGIN {
     time_sys = $2
 }
 END {
+    print ""
+    print "### Models "
+    print "| Model Family | Model Name |"
+    print "| ----         | ----       |"
+    for (i=1; i<=n_models; ++i) {
+        print list_models[i]
+    }
 }   
