@@ -14,7 +14,7 @@ DETECTED_DEVICES="$(
             }' 
 )"
 
-export GGML_VK_VISIBLE_DEVICES=${GGML_VK_VISIBLE_DEVICES-${DETECTED_DEVICES}}
+export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES-${DETECTED_DEVICES}}"
 
 WANT_DOWNLOAD=${WANT_DOWNLOAD-true}
 WANT_BENCHMARK=${WANT_BENCHMARK-true}
@@ -47,30 +47,31 @@ model_add() {
 # Models are downloaded into the HuggingFace cache, which is typically $HOME/.cache/huggingface/hub, 
 # and then auto-discovered by llama.cpp when running benchmarks or the server.
 
-model_add "DeepSeek"            ":Q4_K_M"   "Jackrong/Qwen3.5-9B-DeepSeek-V4-Flash-GGUF"
+model_add "DeepSeek_R1_Distill" ":Q4_K_M"   "unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF"
 
 # model_add "Gemma"               ":Q4_K_M"   "MaziyarPanahi/gemma-7b-GGUF"
 
-# model_add "Gemma_4"             ":Q4_K_M"   "unsloth/gemma-4-12b-it-GGUF" -- Causes llama.cpp to crash with a segmentation fault on MI25, so skip for now.
+# Gemma 4 non-QAT GGUF crashes on MI25 (segfault). The QAT version below may work.
+# model_add "Gemma_4"             ":Q4_K_M"   "unsloth/gemma-4-12b-it-GGUF"
 # model_add "Gemma_4"             ":Q5_K_M"   "unsloth/gemma-4-12b-it-GGUF"
-# model_add "Gemma_4"             ":Q4_K_M"   "yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF" 
-# model_add "Gemma_4"             ":Q6_K"     "sneedjak/Adelic-Gemma-4-12B-GGUF"
+model_add "Gemma_4_QAT"         ":UD-Q4_K_XL" "unsloth/gemma-4-12B-it-qat-GGUF"
 
 model_add "GPT-OSS"             ":Q4_K_M"   "unsloth/gpt-oss-20b-GGUF"   
 
-model_add "LLama_3.0"           ":Q4_K_M"   "MaziyarPanahi/Meta-Llama-3-8B-Instruct-GGUF"       
-model_add "LLama_3.1"           ":Q4_K_M"   "dphn/Dolphin3.0-Llama3.1-8B-GGUF"                  
-model_add "LLama_3.1"           ":Q4_K_M"   "NousResearch/Hermes-3-Llama-3.1-8B-GGUF"           
+# model_add "LLama_3.0"           ":Q4_K_M"   "MaziyarPanahi/Meta-Llama-3-8B-Instruct-GGUF"       
+#model_add "LLama_3.1"           ":Q4_K_M"   "dphn/Dolphin3.0-Llama3.1-8B-GGUF"                  
+# model_add "LLama_3.1"           ":Q4_K_M"   "NousResearch/Hermes-3-Llama-3.1-8B-GGUF"           
 model_add "LLama_3.2"           ":Q4_K_M"   "bartowski/Llama-3.2-3B-Instruct-GGUF"              
 
-model_add "Microsoft_Phi-2"     ":Q4_K_M"   "TheBloke/phi-2-GGUF"                               
-model_add "Microsoft_Phi-3.5"   ":Q4_K_M"   "MaziyarPanahi/Phi-3.5-mini-instruct-GGUF"          
+# model_add "Microsoft_Phi-2"     ":Q4_K_M"   "TheBloke/phi-2-GGUF"                               
+# model_add "Microsoft_Phi-3.5"   ":Q4_K_M"   "MaziyarPanahi/Phi-3.5-mini-instruct-GGUF"          
 model_add "Microsoft_Phi-4"     ":Q4_K_M"   "unsloth/Phi-4-mini-instruct-GGUF"                  
 
+model_add "Devtral_7B"          ":Q4_K_M"   "mistralai/Devstral-Small-2505_gguf"       
 model_add "Mistral_7B"          ":Q4_K_M"   "MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF"       
 
-model_add "Qwen_2.5_Coder"      ":Q4_K_M"   "lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF" 
-model_add "Qwen_2.5"            ":Q4_K_M"   "Qwen/Qwen2.5-7B-Instruct-GGUF"                     
+# model_add "Qwen_2.5_Coder"      ":Q4_K_M"   "lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF" 
+# model_add "Qwen_2.5"            ":Q4_K_M"   "Qwen/Qwen2.5-7B-Instruct-GGUF"                     
 model_add "Qwen_3.5"            ":Q4_K_M"   "unsloth/Qwen3.5-9B-GGUF"                           
 
 # These do not generate meaningful results, so skip for now.

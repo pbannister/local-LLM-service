@@ -59,18 +59,13 @@ Models used are stored in the HuggingFace cache.
 
 | Model Family | Model Name |
 | ----         | ----       |
-| DeepSeek | Jackrong/Qwen3.5-9B-DeepSeek-V4-Flash-GGUF:Q4_K_M |
+| DeepSeek_R1_Distill | unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF:Q4_K_M |
+| Gemma_4_QAT | unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL |
 | GPT-OSS | unsloth/gpt-oss-20b-GGUF:Q4_K_M |
-| LLama_3.0 | MaziyarPanahi/Meta-Llama-3-8B-Instruct-GGUF:Q4_K_M |
-| LLama_3.1 | dphn/Dolphin3.0-Llama3.1-8B-GGUF:Q4_K_M |
-| LLama_3.1 | NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M |
 | LLama_3.2 | bartowski/Llama-3.2-3B-Instruct-GGUF:Q4_K_M |
-| Microsoft_Phi-2 | TheBloke/phi-2-GGUF:Q4_K_M |
-| Microsoft_Phi-3.5 | MaziyarPanahi/Phi-3.5-mini-instruct-GGUF:Q4_K_M |
 | Microsoft_Phi-4 | unsloth/Phi-4-mini-instruct-GGUF:Q4_K_M |
+| Devtral_7B | mistralai/Devstral-Small-2505_gguf:Q4_K_M |
 | Mistral_7B | MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF:Q4_K_M |
-| Qwen_2.5_Coder | lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M |
-| Qwen_2.5 | Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M |
 | Qwen_3.5 | unsloth/Qwen3.5-9B-GGUF:Q4_K_M |
 
 ### llama-bench

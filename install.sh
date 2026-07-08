@@ -52,6 +52,8 @@ ExecStart=/usr/local/bin/llama-server \
     --host ${LISTEN_ADDRESS} \
     --port ${LISTEN_PORT} \
     --models-max ${MODELS_MAX} \
+    --fit on \
+    --fit-target 1024 \
     --tools all
 
 Restart=on-failure
