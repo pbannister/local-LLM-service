@@ -110,7 +110,7 @@ model_benchmark() {
     local model_family="${MODEL_FAMILY[$1]}"
     local model_name="${MODEL_NAME[$1]}"
     local model_spec="${MODEL_SPEC[$1]}"
-    local model_options="${MODEL_OPTIONS[$1]}"
+    # local model_options="${MODEL_OPTIONS[$1]}"
     echo "
 
 ==== Benchmark
@@ -122,7 +122,7 @@ MODEL_SPEC      $model_spec
     # Run llama.cpp benchmark
     (
         set -x
-        time llama-bench $OPTIONS_LLAMA_BENCH -hf "$model_name$model_spec" $model_options || {
+        time llama-bench $OPTIONS_LLAMA_BENCH -hf "$model_name$model_spec" || {
             echo "ERROR cannot benchmark model $model_family -- $model_name"
             exit 1
         }
