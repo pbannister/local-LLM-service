@@ -2,7 +2,7 @@
 
 WANT_SERVICE=${WANT_SERVICE-true}
 
-SERVICE_NAME="llama-server.service"
+SERVICE_NAME="llama.service"
 $WANT_SERVICE && {
     echo "Stop: $SERVICE_NAME"
     sudo systemctl stop "$SERVICE_NAME" 
@@ -125,7 +125,13 @@ OPTIONS_LLAMA_BENCH="
 "
 
 # Note that some models (Qwen 3.5 in particular) get stupid without specifying the year of publication.
+# Note that Qwen 2.5 Coder gets stuck in a loop on this prompt.
 PROMPT='Please summarize the book from Adam Smith published in 1776 - "Wealth of Nations" - in 3 paragraphs, and provide a list of the main points in bullet form.'
+
+# Coding related prompt.
+PROMPT='Generate a Javascript program to compute Pi to 100 decimal places.'
+
+
 
 model_download() {
     local model_family="${MODEL_FAMILY[$1]}"
