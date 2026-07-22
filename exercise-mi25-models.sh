@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
+WANT_SERVICE=${WANT_SERVICE-true}
+
+SERVICE_NAME="llama-server.service"
+$WANT_SERVICE && {
+    echo "Stop: $SERVICE_NAME"
+    sudo systemctl stop "$SERVICE_NAME" 
+}
+
 GPU=${GPU-"MI25"}
+
+# Set GB_FITS to the maximum number of GB that can fit on your GPU.  This is used to filter out models that are too large to fit on your GPU.  The default is 16GB, which is the maximum for MI25.  You can override this by setting the GB_FITS environment variable before running this script.
+GB_FITS=${GB_FITS-16}
 
 # Detect MI25 devices and set GGML_VK_VISIBLE_DEVICES to the list of detected devices.
 
@@ -34,15 +45,25 @@ MODEL_SPEC=()
 MODEL_OPTIONS=()
 
 model_add() {
-    local model_family="$1"
-    local model_spec="$2"
-    local model_name="$3"
-    local model_options="$4"
+    local gb_wants="$1"
+    [ "$GB_FITS" -lt "$gb_wants" ] && return 0
+    local model_family="$2"
+    local model_spec="$3"
+    local model_name="$4"
+    local model_options="$5"
     MODEL_FAMILY+=("$model_family")
     MODEL_SPEC+=("$model_spec")
     MODEL_NAME+=("$model_name")
     MODEL_OPTIONS+=("$model_options")
 }
+
+WANT_MODELS=${WANT_MODELS-true}
+WANT_MODELS_DEEPSEEK=${WANT_MODELS_DEEPSEEK-${WANT_MODELS}}
+WANT_MODELS_GEMMA4=${WANT_MODELS_GEMMA4-${WANT_MODELS}}
+WANT_MODELS_GPT=${WANT_MODELS_GPT-${WANT_MODELS}}
+WANT_MODELS_LLAMA=${WANT_MODELS_LLAMA-${WANT_MODELS}}
+WANT_MODELS_MISTRAL=${WANT_MODELS_MISTRAL-${WANT_MODELS}}
+WANT_MODELS_QWEN=${WANT_MODELS_QWEN-${WANT_MODELS}}
 
 # Selection of possibly-interesting models to download and benchmark.  
 # These are all GGUF format models, which is the only format supported by llama.cpp for now.
@@ -50,31 +71,51 @@ model_add() {
 # Models are downloaded into the HuggingFace cache, which is typically $HOME/.cache/huggingface/hub, 
 # and then auto-discovered by llama.cpp when running benchmarks or the server.
 
-model_add "DeepSeek-R1-Distill-Qwen-1.5B"   ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF"
-model_add "DeepSeek-R1-Distill-Qwen-14B"    ":Q4_K_M"       "unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF"
+# Keep in mind the GB_WANTS values are guessed.
 
-# Gemma 4 non-QAT GGUF crashes on MI25 (segfault). The QAT version below may work.
-model_add "Gemma-4-E2B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"                 "--jinja"
-model_add "Gemma-4-E4B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"                 "--jinja"
-model_add "Gemma-4-12B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"                 "--jinja"
-model_add "Gemma-4-26B-A4B-QAT"             ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"             "--jinja"
-model_add "Gemma-4-31B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-31B-it-qat-GGUF"                 "--jinja"
+$WANT_MODELS_DEEPSEEK && {
+    model_add 2  "DeepSeek-R1-Distill-Qwen-1.5B"   ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF"
+    model_add 10 "DeepSeek-R1-Distill-Qwen-14B"    ":Q4_K_M"       "unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF"
+}
 
-model_add "GPT-OSS-20B"                     ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"   
+$WANT_MODELS_GEMMA4 && {
+    # Gemma 4 non-QAT GGUF crashes on MI25 (segfault). The QAT version below may work.
+    model_add 4  "Gemma-4-E2B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"                 "--jinja"
+    model_add 8  "Gemma-4-E4B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"                 "--jinja"
+    model_add 8  "Gemma-4-12B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"                 "--jinja"
+    model_add 16 "Gemma-4-26B-A4B-QAT"             ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"             "--jinja"
+    model_add 18 "Gemma-4-31B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-31B-it-qat-GGUF"                 "--jinja"
+}
 
-model_add "LLama-3.2-1B"                    ":Q4_K_M"       "unsloth/Llama-3.2-1B-Instruct-GGUF"              
-model_add "LLama-3.2-3B"                    ":Q4_K_M"       "unsloth/Llama-3.2-3B-Instruct-GGUF"              
+$WANT_MODELS_GPT && {
+    model_add 7  "GPT-OSS-7B"                      ":Q4_K_M"       "unsloth/gpt-oss-7b-GGUF"    
+    model_add 16 "GPT-OSS-20B"                     ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"   
+}
 
-# model_add "Microsoft-Phi-4"                 ":Q4_K_M"       "unsloth/Phi-4-mini-instruct-GGUF"                  
+$WANT_MODELS_LLAMA && {
+    model_add 1  "LLama-3.2-1B"                    ":Q4_K_M"       "unsloth/Llama-3.2-1B-Instruct-GGUF"              
+    model_add 3  "LLama-3.2-3B"                    ":Q4_K_M"       "unsloth/Llama-3.2-3B-Instruct-GGUF"              
+}
 
-model_add "Devstral-Small-2-24B"            ":Q4_K_M"       "unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF"       
-model_add "Mistral-Small-3.2-24B"           ":Q4_K_S"       "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"       
+$WANT_MODELS_MISTRAL && {
+    model_add 16 "Mistral-Small-3.2-24B"           ":Q4_K_S"       "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"       
+    model_add 16 "Devstral-Small-2-24B"            ":Q4_K_M"       "unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF"       
+}
 
-model_add "Qwen-3.5-2B"                     ":Q4_K_M"       "unsloth/Qwen3.5-2B-GGUF"                           
-model_add "Qwen-3.5-4B"                     ":Q4_K_M"       "unsloth/Qwen3.5-4B-GGUF"                           
-model_add "Qwen-3.5-9B"                     ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
-model_add "Qwen-3.5-27B"                    ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
+# Seems smaller models are faster. and Qwen2.5-Coder supports code-completion (FIN?).
+# Taken together, you might want to load whatever model will fit in your local GPU for code-completion tasks.  
 
+$WANT_MODELS_QWEN && {
+    model_add 2  "Qwen-2.5-Coder-1.5B"             ":Q4_K_M"       "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
+    model_add 3  "Qwen-2.5-Coder-3B"               ":Q4_K_M"       "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF"
+    model_add 7  "Qwen-2.5-Coder-7B"               ":Q4_K_M"       "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF"
+}
+$WANT_MODELS_QWEN && {
+    model_add 2  "Qwen-3.5-2B"                     ":Q4_K_M"       "unsloth/Qwen3.5-2B-GGUF"                           
+    model_add 4  "Qwen-3.5-4B"                     ":Q4_K_M"       "unsloth/Qwen3.5-4B-GGUF"                           
+    model_add 8  "Qwen-3.5-9B"                     ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
+    model_add 18 "Qwen-3.5-27B"                    ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
+}
 
 OPTIONS_LLAMA_BENCH="
 -p 512,2048,4096 
@@ -83,7 +124,8 @@ OPTIONS_LLAMA_BENCH="
 -r 3
 "
 
-PROMPT='Please summarize the book from Adam Smith - "Wealth of Nations" - in 3 paragraphs, and provide a list of the main points in bullet form.'
+# Note that some models (Qwen 3.5 in particular) get stupid without specifying the year of publication.
+PROMPT='Please summarize the book from Adam Smith published in 1776 - "Wealth of Nations" - in 3 paragraphs, and provide a list of the main points in bullet form.'
 
 model_download() {
     local model_family="${MODEL_FAMILY[$1]}"
@@ -142,6 +184,11 @@ MODEL_SPEC      $model_spec
         done
     }
 } < /dev/null 2>&1 | tee "$FILE_LOG"
+
+$WANT_SERVICE && {
+    echo "Start: $SERVICE_NAME"
+    sudo systemctl start "$SERVICE_NAME" 
+}
 
 echo "
 ==== Done
