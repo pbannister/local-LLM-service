@@ -31,14 +31,17 @@ FILE_LOG="$LOGS_BASE/run-$GPU-$WHEN.log"
 MODEL_FAMILY=()
 MODEL_NAME=()
 MODEL_SPEC=()
+MODEL_OPTIONS=()
 
 model_add() {
     local model_family="$1"
     local model_spec="$2"
     local model_name="$3"
+    local model_options="$4"
     MODEL_FAMILY+=("$model_family")
     MODEL_SPEC+=("$model_spec")
     MODEL_NAME+=("$model_name")
+    MODEL_OPTIONS+=("$model_options")
 }
 
 # Selection of possibly-interesting models to download and benchmark.  
@@ -47,36 +50,30 @@ model_add() {
 # Models are downloaded into the HuggingFace cache, which is typically $HOME/.cache/huggingface/hub, 
 # and then auto-discovered by llama.cpp when running benchmarks or the server.
 
-model_add "DeepSeek_R1_Distill" ":Q4_K_M"   "unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF"
-
-# model_add "Gemma"               ":Q4_K_M"   "MaziyarPanahi/gemma-7b-GGUF"
+model_add "DeepSeek-R1-Distill-Qwen-1.5B"   ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF"
+model_add "DeepSeek-R1-Distill-Qwen-14B"    ":Q4_K_M"       "unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF"
 
 # Gemma 4 non-QAT GGUF crashes on MI25 (segfault). The QAT version below may work.
-# model_add "Gemma_4"             ":Q4_K_M"   "unsloth/gemma-4-12b-it-GGUF"
-# model_add "Gemma_4"             ":Q5_K_M"   "unsloth/gemma-4-12b-it-GGUF"
-model_add "Gemma_4_QAT"         ":UD-Q4_K_XL" "unsloth/gemma-4-12B-it-qat-GGUF"
+model_add "Gemma-4-E2B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"                 "--jinja"
+model_add "Gemma-4-E4B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"                 "--jinja"
+model_add "Gemma-4-12B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"                 "--jinja"
+model_add "Gemma-4-26B-A4B-QAT"             ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"             "--jinja"
+model_add "Gemma-4-31B-QAT"                 ":UD-Q4_K_XL"   "unsloth/gemma-4-31B-it-qat-GGUF"                 "--jinja"
 
-model_add "GPT-OSS"             ":Q4_K_M"   "unsloth/gpt-oss-20b-GGUF"   
+model_add "GPT-OSS-20B"                     ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"   
 
-# model_add "LLama_3.0"           ":Q4_K_M"   "MaziyarPanahi/Meta-Llama-3-8B-Instruct-GGUF"       
-#model_add "LLama_3.1"           ":Q4_K_M"   "dphn/Dolphin3.0-Llama3.1-8B-GGUF"                  
-# model_add "LLama_3.1"           ":Q4_K_M"   "NousResearch/Hermes-3-Llama-3.1-8B-GGUF"           
-model_add "LLama_3.2"           ":Q4_K_M"   "bartowski/Llama-3.2-3B-Instruct-GGUF"              
+model_add "LLama-3.2-1B"                    ":Q4_K_M"       "unsloth/Llama-3.2-1B-Instruct-GGUF"              
+model_add "LLama-3.2-3B"                    ":Q4_K_M"       "unsloth/Llama-3.2-3B-Instruct-GGUF"              
 
-# model_add "Microsoft_Phi-2"     ":Q4_K_M"   "TheBloke/phi-2-GGUF"                               
-# model_add "Microsoft_Phi-3.5"   ":Q4_K_M"   "MaziyarPanahi/Phi-3.5-mini-instruct-GGUF"          
-model_add "Microsoft_Phi-4"     ":Q4_K_M"   "unsloth/Phi-4-mini-instruct-GGUF"                  
+# model_add "Microsoft-Phi-4"                 ":Q4_K_M"       "unsloth/Phi-4-mini-instruct-GGUF"                  
 
-model_add "Devtral_7B"          ":Q4_K_M"   "mistralai/Devstral-Small-2505_gguf"       
-model_add "Mistral_7B"          ":Q4_K_M"   "MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF"       
+model_add "Devstral-Small-2-24B"            ":Q4_K_M"       "unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF"       
+model_add "Mistral-Small-3.2-24B"           ":Q4_K_S"       "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"       
 
-# model_add "Qwen_2.5_Coder"      ":Q4_K_M"   "lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF" 
-# model_add "Qwen_2.5"            ":Q4_K_M"   "Qwen/Qwen2.5-7B-Instruct-GGUF"                     
-model_add "Qwen_3.5"            ":Q4_K_M"   "unsloth/Qwen3.5-9B-GGUF"                           
-
-# These do not generate meaningful results, so skip for now.
-# model_add "GPT2"                ":Q8_0"   "PrunaAI/gpt2-GGUF-smashed"                         
-# model_add "GPT2"                ":Q4_K_M" "QuantFactory/gpt2-GGUF"                            
+model_add "Qwen-3.5-2B"                     ":Q4_K_M"       "unsloth/Qwen3.5-2B-GGUF"                           
+model_add "Qwen-3.5-4B"                     ":Q4_K_M"       "unsloth/Qwen3.5-4B-GGUF"                           
+model_add "Qwen-3.5-9B"                     ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
+model_add "Qwen-3.5-27B"                    ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
 
 
 OPTIONS_LLAMA_BENCH="
@@ -92,6 +89,7 @@ model_download() {
     local model_family="${MODEL_FAMILY[$1]}"
     local model_name="${MODEL_NAME[$1]}"
     local model_spec="${MODEL_SPEC[$1]}"
+    local model_options="${MODEL_OPTIONS[$1]}"
     echo "
 
 ==== Download 
@@ -101,7 +99,7 @@ MODEL_SPEC      $model_spec
 "
     (
         set -x
-        time llama-completion -hf "$model_name$model_spec" --single-turn --prompt "$PROMPT" || {
+        time llama-completion -hf "$model_name$model_spec" --single-turn --prompt "$PROMPT" $model_options || {
             echo "ERROR cannot download and run model $model_family -- $model_name"
             exit 1
         }
@@ -112,7 +110,7 @@ model_benchmark() {
     local model_family="${MODEL_FAMILY[$1]}"
     local model_name="${MODEL_NAME[$1]}"
     local model_spec="${MODEL_SPEC[$1]}"
-
+    local model_options="${MODEL_OPTIONS[$1]}"
     echo "
 
 ==== Benchmark
@@ -124,7 +122,7 @@ MODEL_SPEC      $model_spec
     # Run llama.cpp benchmark
     (
         set -x
-        time llama-bench $OPTIONS_LLAMA_BENCH -hf "$model_name$model_spec" || {
+        time llama-bench $OPTIONS_LLAMA_BENCH -hf "$model_name$model_spec" $model_options || {
             echo "ERROR cannot benchmark model $model_family -- $model_name"
             exit 1
         }
