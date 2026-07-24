@@ -116,9 +116,10 @@ $WANT_MODELS_QWEN && {
     model_add 8  "Qwen-3.5-9B"                     ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
     model_add 18 "Qwen-3.5-27B"                    ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
 }
-$WANT_MODELS_QWEN && {
+false && {
     # Variant with large (1M) context window.
     model_add 10 "Qwythos-9B-Claude-Mythos-5-1M"   ":Q4_K_M"       "empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF"
+    # Gets stuck in a loop on the smoke test.
 }
 
 OPTIONS_LLAMA_BENCH="
