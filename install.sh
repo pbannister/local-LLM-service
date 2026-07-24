@@ -3,7 +3,6 @@
 SERVICE_NAME=${SERVICE_NAME-"llama.service"}
 LISTEN_ADDRESS=${LISTEN_ADDRESS-0.0.0.0}
 LISTEN_PORT=${LISTEN_PORT-2001}
-MODELS_MAX=${MODELS_MAX-4}
 
 HF_HUB_CACHE=${HF_HUB_CACHE-/home/${USER}/.cache/huggingface/hub}
 
@@ -51,9 +50,6 @@ ExecStart=/usr/local/bin/llama-server \
     --models-preset ${MODEL_HOME}/config.ini \
     --host ${LISTEN_ADDRESS} \
     --port ${LISTEN_PORT} \
-    --models-max ${MODELS_MAX} \
-    --fit on \
-    --fit-target 1024 \
     --tools all
 
 Restart=on-failure
