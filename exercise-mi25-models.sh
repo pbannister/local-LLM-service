@@ -217,13 +217,17 @@ OPTIONS_LLAMA_BENCH="
 -r 3
 "
 
+# This prompt is for testing the model's ability to summarize a book. It is not related to coding.
 # Note that some models (Qwen 3.5 in particular) get stupid without specifying the year of publication.
 # Note that Qwen 2.5 Coder gets stuck in a loop on this prompt.
-PROMPT='Please summarize the book from Adam Smith published in 1776 - "Wealth of Nations" - in 3 paragraphs, and provide a list of the main points in bullet form.'
+#PROMPT='Please summarize the book from Adam Smith published in 1776 - "Wealth of Nations" - in 3 paragraphs, and provide a list of the main points in bullet form.'
 
 # Coding related prompt.
-PROMPT='Generate a Javascript program to compute Pi to 100 decimal places.'
+# Note that some models - sometimes! - get stuck in a loop on this prompt.
+#PROMPT='Generate a Javascript program to compute Pi to 100 decimal places.'
 
+# Hopefully this prompt is less likely to get stuck in a loop.
+PROMPT='Generate a Javascript program present a rotating cube in a web browser.'
 
 
 model_download() {
