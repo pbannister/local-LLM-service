@@ -46,7 +46,7 @@ MODEL_SPEC=()
 
 declare -A MODEL_OPTIONS
 
-model_key_last=""
+model_key_this=""
 
 model_add() {
     local gb_wants="$1"
@@ -54,17 +54,16 @@ model_add() {
     local model_family="$2"
     local model_spec="$3"
     local model_name="$4"
-    model_key_last="$(echo $model_family | sha256sum | awk '{print $1}')"
-    MODEL_KEY+=("$model_key_last")
+    model_key_this="$(echo $model_family | sha256sum | awk '{print $1}')"
+    MODEL_KEY+=("$model_key_this")
     MODEL_FAMILY+=("$model_family")
     MODEL_SPEC+=("$model_spec")
     MODEL_NAME+=("$model_name")
+    MODEL_OPTIONS["$model_key_this"]=""
 }
 
 model_options() {
-    local model_key="$model_key_last"
-    local model_options="$0"
-    MODEL_OPTIONS["$model_key"]="$model_options"
+    MODEL_OPTIONS["$model_key_this"]="$*"
 }
 
 WANT_MODELS=${WANT_MODELS-true}
@@ -131,7 +130,6 @@ $WANT_MODELS_GEMMA4 && {
     model_options       "--jinja --temp 1.0 --top-p 0.95 --top-k 64"
 }
 
-
 $WANT_MODELS_GPT && {
     model_add  7    "GPT-OSS-7B"                        ":Q4_K_M"       "unsloth/gpt-oss-7b-GGUF"    
     model_add 15    "GPT-OSS-20B"                       ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"   
@@ -161,16 +159,14 @@ $WANT_MODELS_QWEN && {
 }
 $WANT_MODELS_QWEN && {
     model_add  2    "Qwen-3.5-2B"                       ":Q4_K_M"       "unsloth/Qwen3.5-2B-GGUF"   
-    model_options       "--temp 0.7 --top-p 0.95"
     model_add  4    "Qwen-3.5-4B"                       ":Q4_K_M"       "unsloth/Qwen3.5-4B-GGUF"      
-    model_options       "--temp 0.7 --top-p 0.95"
 
     # Found article recommending this model for 8GB VRAM.
     model_add  8    "Qwen-3.5-9B"                       ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
-    model_options       "--temp 0.7 --top-p 0.95"
+    # model_options       "--temp 0.7 --top-p 0.95"
     
     model_add 18    "Qwen-3.5-27B"                      ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
-    model_options       "--temp 0.7 --top-p 0.95"
+    # model_options       "--temp 0.7 --top-p 0.95"
 }
 $WANT_MODELS_QWEN && {
     # Variant with large (1M) context window.
