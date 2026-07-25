@@ -69,7 +69,7 @@ LOGS_BASE="$MODEL_HOME/logs"
 mkdir -p "$LOGS_BASE"
 
 WHEN=$(date +%Y-%m-%d-%H-%M)
-FILE_LOG="$LOGS_BASE/run-$GPU-$WHEN.log"
+FILE_LOG="$LOGS_BASE/$WHEN-run-$HOSTNAME-$GPU.log"
 
 MODEL_KEY=()
 MODEL_FAMILY=()
