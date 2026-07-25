@@ -8,24 +8,56 @@ $WANT_SERVICE && {
     sudo systemctl stop "$SERVICE_NAME" 
 }
 
-GPU=${GPU-"MI25"}
+# Detect GPU and set GGML_VK_VISIBLE_DEVICES to the list of detected devices.
+#
+# $ llama-cli --list-devices
+# Available devices:
+#   Vulkan0: Radeon RX 5500 XT (RADV NAVI14) (8192 MiB, 4857 MiB free)
+#
+# $ llama-cli --list-devices
+# Available devices:
+#   Vulkan0: AMD Radeon Instinct MI25 (RADV VEGA10) (16368 MiB, 16343 MiB free)
 
-# Set GB_FITS to the maximum number of GB that can fit on your GPU.  This is used to filter out models that are too large to fit on your GPU.  The default is 16GB, which is the maximum for MI25.  You can override this by setting the GB_FITS environment variable before running this script.
-GB_FITS=${GB_FITS-16}
+DETECTED_DEVICES=($(
+    {
+        free -g -t 
+        llama-cli --list-devices | grep Vulkan
+    } | awk '
+            BEGIN {
+                DEVICE=9
+                GB_FITS=64
+                GPU="CPU"
+            }
+            /^Total:/ { 
+                GB_FITS=$2
+            }
+            { 
+                sub(/^  Vulkan/,"") 
+                sub(/:/,"") 
+            } 
+            /Radeon Instinct MI25/ { 
+                DEVICE=$1
+                GB_FITS=16
+                GPU="MI25"
+            }
+            /Radeon RX 5500 XT/ { 
+                DEVICE=$1
+                GB_FITS=8
+                GPU="RX5500XT"
+            }
+            END {
+                print DEVICE " " GB_FITS " " GPU
+            }
+        '
+))
 
-# Detect MI25 devices and set GGML_VK_VISIBLE_DEVICES to the list of detected devices.
+# Use the detected device as the default.
+# Set GB_FITS to the maximum number of GB that can fit on your GPU.  
+# This is used to filter out models that are too large to fit on your GPU.  
 
-DETECTED_DEVICES="$( 
-    llama-cli --list-devices | 
-        awk '
-            /AMD.*MI25 /{ 
-                sub(/^ *Vulkan/,"")
-                sub(/:.*$/,"")
-                print 
-            }' 
-)"
-
-export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES-${DETECTED_DEVICES}}"
+export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES-${DETECTED_DEVICES[0]}}"
+GB_FITS=${GB_FITS-${DETECTED_DEVICES[1]}}
+GPU=${GPU-${DETECTED_DEVICES[2]}}
 
 WANT_DOWNLOAD=${WANT_DOWNLOAD-true}
 WANT_BENCHMARK=${WANT_BENCHMARK-true}
