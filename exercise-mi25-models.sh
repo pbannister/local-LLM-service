@@ -42,7 +42,7 @@ DETECTED_DEVICES=($(
             }
             /Radeon RX 5500 XT/ { 
                 DEVICE=$1
-                GB_FITS=8
+                GB_FITS=6 # (8 - 2) for other processes
                 GPU="RX5500XT"
             }
             END {
@@ -130,9 +130,7 @@ $WANT_MODELS_GEMMA4 && {
     # which is why the total memory required to load static weights is higher than the effective parameter count suggests.
 
     model_add  3    "Gemma-4-E2B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"         
-    # model_options       "--jinja"
     model_add  5    "Gemma-4-E4B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"         
-    # model_options       "--jinja"
 
     # The MoE Architecture (26B A4B): 
     # The 26B is a Mixture of Experts model. 
@@ -141,25 +139,21 @@ $WANT_MODELS_GEMMA4 && {
     # This is why its baseline memory requirement is much closer to a dense 26B model than a 4B model.
 
     model_add 15    "Gemma-4-26B-A4B-QAT"               ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"         
-    # model_options       "--jinja"
     
     model_add  7    "Gemma-4-12B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"          
-    # model_options       "--jinja"
     model_add 18    "Gemma-4-31B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-31B-it-qat-GGUF"          
-    # model_options       "--jinja"
 }
 $WANT_MODELS_GEMMA4 && {
     # GGUF exports of josephmayo/gemma-4-E4B-it-Coder, a merged coding-focused fine-tune of google/gemma-4-E4B-it.
     model_add  6    "Gemma-4-E4B-Coder"                 ":Q5_K_M"       "josephmayo/gemma-4-E4B-it-Coder-GGUF"          
-    # model_options       "--jinja"
 }
 $WANT_MODELS_GEMMA4 && {
     # Gemma4-12B v2 — Coding + Agentic Edition
     # Tiny footprint, big brain — a local coding & tool-using agent for everyone
     # Big agentic upgrade — reads, reasons, uses tools, and works through multi-step technical tasks. 
     # llama cli -hf yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF:Q4_K_M
-    model_add 6     "Gemma-4-12B-agentic"               ":Q4_K_M"       "yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF"         
-    # model_options       "--jinja --temp 1.0 --top-p 0.95 --top-k 64"
+    model_add  7    "Gemma-4-12B-agentic"               ":Q4_K_M"       "yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF"         
+    # model_options       "--temp 1.0 --top-p 0.95 --top-k 64"
 }
 
 $WANT_MODELS_GPT && {
@@ -244,7 +238,7 @@ MODEL_SPEC      $model_spec
 "
     (
         set -x
-        time llama-completion -hf "$model_name$model_spec" --single-turn --prompt "$PROMPT" $model_options || {
+        time llama-completion -hf "$model_name$model_spec" $model_options --jinja --single-turn --prompt "$PROMPT" || {
             echo "ERROR cannot download and run model $model_family -- $model_name"
             exit 1
         }
@@ -268,7 +262,7 @@ MODEL_SPEC      $model_spec
     # Run llama.cpp benchmark
     (
         set -x
-        time llama-bench $OPTIONS_LLAMA_BENCH -hf "$model_name$model_spec" $model_options || {
+        time llama-bench -hf "$model_name$model_spec" $model_options $OPTIONS_LLAMA_BENCH || {
             echo "ERROR cannot benchmark model $model_family -- $model_name"
             exit 1
         }
