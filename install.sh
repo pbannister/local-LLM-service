@@ -25,6 +25,15 @@ DETECTED_DEVICES="$(
 
 GGML_VK_VISIBLE_DEVICES=${GGML_VK_VISIBLE_DEVICES-${DETECTED_DEVICES}}
 
+CONFIG_FILE1="${MODEL_HOME}/config-$(hostname).ini"
+CONFIG_FILE2="/usr/local/etc/config.ini"
+
+# Create the llama-server configuration file
+sudo cp $CONFIG_FILE1 $CONFIG_FILE2 || {
+    echo "ERROR no config.ini file for host: $HOSTNAME"
+    exit 1
+}
+
 # Create and configure the systemd unit file
 cat <<XXXX | sudo tee /etc/systemd/system/${SERVICE_NAME}
 [Unit]
@@ -47,7 +56,7 @@ WorkingDirectory=${MODEL_HOME}
 
 # Make sure the absolute path to your compiled llama-server is correct
 ExecStart=/usr/local/bin/llama-server \
-    --models-preset ${MODEL_HOME}/config.ini \
+    --models-preset ${CONFIG_FILE2} \
     --host ${LISTEN_ADDRESS} \
     --port ${LISTEN_PORT} \
     --tools all
@@ -55,7 +64,6 @@ ExecStart=/usr/local/bin/llama-server \
 Restart=on-failure
 RestartSec=5
 
-# System profiling protections
 ProtectSystem=full
 PrivateTmp=true
 
