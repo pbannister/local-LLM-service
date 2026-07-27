@@ -99,12 +99,10 @@ model_options() {
 }
 
 WANT_MODELS=${WANT_MODELS-true}
-WANT_MODELS_DEEPSEEK=${WANT_MODELS_DEEPSEEK-${WANT_MODELS}}
-WANT_MODELS_GEMMA4=${WANT_MODELS_GEMMA4-${WANT_MODELS}}
-WANT_MODELS_GPT=${WANT_MODELS_GPT-${WANT_MODELS}}
-WANT_MODELS_LLAMA=${WANT_MODELS_LLAMA-${WANT_MODELS}}
-WANT_MODELS_MISTRAL=${WANT_MODELS_MISTRAL-${WANT_MODELS}}
-WANT_MODELS_QWEN=${WANT_MODELS_QWEN-${WANT_MODELS}}
+
+WANT_MODELS_COMPLETION=${WANT_MODELS_COMPLETION-${WANT_MODELS}}
+WANT_MODELS_REASONING=${WANT_MODELS_REASONING-${WANT_MODELS}}
+WANT_MODELS_CPU=${WANT_MODELS_CPU-${WANT_MODELS}}
 
 # Selection of possibly-interesting models to download and benchmark.  
 # These are all GGUF format models, which is the only format supported by llama.cpp for now.
@@ -114,93 +112,83 @@ WANT_MODELS_QWEN=${WANT_MODELS_QWEN-${WANT_MODELS}}
 
 # Keep in mind the GB_WANTS values are guessed.
 
-$WANT_MODELS_DEEPSEEK && {
-    model_add  2    "DeepSeek-R1-Distill-Qwen-1.5B"     ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF"
-    model_add 10    "DeepSeek-R1-Distill-Qwen-14B"      ":Q4_K_M"       "unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF"
-}
+$WANT_MODELS_COMPLETION && {
+    # Fast Code Completion (Deterministic low temp, 8k context cap to keep latency sub-10ms)
+    model_add  2    "Qwen-2.5-Coder-1.5B"               ":Q8_0"         "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
+    model_options   "-c 8192 --temp 0.2 --top-p 0.95 -fa"
 
-$WANT_MODELS_GEMMA4 && {
-    # Gemma 4 non-QAT GGUF crashes on MI25 (segfault). The QAT version below may work.
+    model_add  4    "Qwen-2.5-Coder-3B"                 ":Q8_0"         "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF"
+    model_options   "-c 8192 --temp 0.2 --top-p 0.95 -fa"
 
-    # Efficient Architecture (E2B and E4B): 
-    # The "E" stands for "effective" parameters. 
-    # The smaller models incorporate Per-Layer Embeddings (PLE) to maximize parameter efficiency in on-device deployments. 
-    # Rather than adding more layers to the model, PLE gives each decoder layer its own small embedding for every token. 
-    # These embedding tables are large but only used for quick lookups, 
-    # which is why the total memory required to load static weights is higher than the effective parameter count suggests.
+    # Fast Desktop Generalists
+    model_add  2    "Llama-3.2-1B"                      ":Q8_0"         "unsloth/Llama-3.2-1B-Instruct-GGUF"
+    model_options   "-c 8192 --temp 0.6 --top-p 0.9 -fa"
 
+    model_add  4    "Llama-3.2-3B"                      ":Q8_0"         "unsloth/Llama-3.2-3B-Instruct-GGUF"
+    model_options   "-c 8192 --temp 0.6 --top-p 0.9 -fa"
+
+    # Fast IDE Chat
     model_add  3    "Gemma-4-E2B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"         
-    model_add  5    "Gemma-4-E4B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"         
+    model_options   "-c 8192 --temp 0.7 -fa"
 
-    # The MoE Architecture (26B A4B): 
-    # The 26B is a Mixture of Experts model. 
-    # While it only activates 4 billion parameters per token during generation, 
-    # all 26 billion parameters must be loaded into memory to maintain fast routing and inference speeds. 
-    # This is why its baseline memory requirement is much closer to a dense 26B model than a 4B model.
-
-    model_add 15    "Gemma-4-26B-A4B-QAT"               ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"         
-    
-    model_add  7    "Gemma-4-12B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"          
-    model_add 18    "Gemma-4-31B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-31B-it-qat-GGUF"          
-}
-$WANT_MODELS_GEMMA4 && {
-    # GGUF exports of josephmayo/gemma-4-E4B-it-Coder, a merged coding-focused fine-tune of google/gemma-4-E4B-it.
-    model_add  6    "Gemma-4-E4B-Coder"                 ":Q5_K_M"       "josephmayo/gemma-4-E4B-it-Coder-GGUF"          
-}
-$WANT_MODELS_GEMMA4 && {
-    # Gemma4-12B v2 — Coding + Agentic Edition
-    # Tiny footprint, big brain — a local coding & tool-using agent for everyone
-    # Big agentic upgrade — reads, reasons, uses tools, and works through multi-step technical tasks. 
-    # llama cli -hf yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF:Q4_K_M
-    model_add  7    "Gemma-4-12B-agentic"               ":Q4_K_M"       "yuxinlu1/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-GGUF"         
-    # model_options       "--temp 1.0 --top-p 0.95 --top-k 64"
+    model_add  6    "Gemma-4-E4B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"          
+    model_options   "-c 8192 --temp 0.7 -fa"
 }
 
-$WANT_MODELS_GPT && {
-    model_add 15    "GPT-OSS-20B"                       ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"   
-
-    # Split model to fit 8GB VRAM, by pushing the layers to CPU. (untested)  
-    model_add  7    "GPT-OSS-20B-split"                 ":Q4_K_M"       "unsloth/gpt-oss-20b-GGUF"                      
-    model_options       "--n-cpu-moe 32"
-}
-
-$WANT_MODELS_LLAMA && {
-    model_add  1    "LLama-3.2-1B"                      ":Q4_K_M"       "unsloth/Llama-3.2-1B-Instruct-GGUF"              
-    model_add  3    "LLama-3.2-3B"                      ":Q4_K_M"       "unsloth/Llama-3.2-3B-Instruct-GGUF"              
-}
-
-$WANT_MODELS_MISTRAL && {
-    model_add 16    "Mistral-Small-3.2-24B"             ":Q4_K_S"       "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"       
+$WANT_MODELS_REASONING && {
+    # Agentic & Coding Workloads
     model_add 16    "Devstral-Small-2-24B"              ":Q4_K_M"       "unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF"       
-}
+    model_options   "-c 16384 --temp 0.15 --top-p 0.95 -fa"
 
-# Seems smaller models are faster. and Qwen2.5-Coder supports code-completion (FIN?).
-# Taken together, you might want to load whatever model will fit in your local GPU for code-completion tasks.  
+    model_add 22    "Qwen-2.5-Coder-32B"                ":Q4_K_M"       "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF"
+    model_options   "-c 16384 --temp 0.2 --top-p 0.95 -fa"
 
-$WANT_MODELS_QWEN && {
-    model_add  2    "Qwen-2.5-Coder-1.5B"               ":Q4_K_M"       "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
-    model_add  3    "Qwen-2.5-Coder-3B"                 ":Q4_K_M"       "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF"
-    model_add  7    "Qwen-2.5-Coder-7B"                 ":Q4_K_M"       "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF"
-}
-$WANT_MODELS_QWEN && {
-    model_add  2    "Qwen-3.5-2B"                       ":Q4_K_M"       "unsloth/Qwen3.5-2B-GGUF"   
-    model_add  4    "Qwen-3.5-4B"                       ":Q4_K_M"       "unsloth/Qwen3.5-4B-GGUF"      
+    # High-Speed MoE on MI25 (Only 4B active parameters per token)
+    model_add 15    "Gemma-4-26B-A4B-QAT"               ":UD-Q4_K_XL"   "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
+    model_options   "-c 16384 --temp 0.7 -fa"
 
-    # Found article recommending this model for 8GB VRAM.
+    # DeepSeek R1 Reasoning Models (Official R1 recommendation: temp=0.6, top_p=0.95)
+    model_add 10    "DeepSeek-R1-Distill-Qwen-14B"      ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF"
+    model_options   "-c 16384 --temp 0.6 --top-p 0.95 -fa"
+
+    model_add 22    "DeepSeek-R1-Distill-32B"           ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Qwen-32B-GGUF"
+    model_options   "-c 16384 --temp 0.6 --top-p 0.95 -fa"
+
+    # General Chat & Tool Calling
+    model_add 15    "GPT-OSS-20B"                       ":UD-Q4_K_XL"   "unsloth/gpt-oss-20b-GGUF"   
+    model_options   "-c 16384 --temp 0.7 -fa"
+
+    model_add  7    "Gemma-4-12B-QAT"                   ":UD-Q4_K_XL"   "unsloth/gemma-4-12B-it-qat-GGUF"          
+    model_options   "-c 16384 --temp 0.7 -fa"
+
+    model_add  8    "Mistral-Nemo-12B"                  ":Q4_K_M"       "unsloth/Mistral-Nemo-Base-2407-GGUF"
+    model_options   "-c 16384 --temp 0.3 -fa"
+
+    # Qwen 3.5 Models (Requires slight repeat penalty to prevent prompt loops)
     model_add  8    "Qwen-3.5-9B"                       ":Q4_K_M"       "unsloth/Qwen3.5-9B-GGUF"                           
-    # model_options       "--temp 0.7 --top-p 0.95"
-    
-    model_add 18    "Qwen-3.5-27B"                      ":Q4_K_S"       "unsloth/Qwen3.5-27B-GGUF"                           
-    # model_options       "--temp 0.7 --top-p 0.95"
-}
-$WANT_MODELS_QWEN && {
-    # Variant with large (1M) context window.
-    # Gets stuck in a loop on the smoke test. Reported to Qwythos devs. 
-    #model_add 10 "Qwythos-9B-Claude-Mythos-5-1M"    ":Q4_K_M"       "empero-ai/Qwythos-9B-Claude-Mythos-5-1M-GGUF"
+    model_options   "-c 16384 --temp 0.7 --top-p 0.8 --repeat-penalty 1.05 -fa"
 
-    # Updated model published after above report.
-    # llama cli -hf empero-ai/Qwythos-9B-v2-GGUF:Q4_K_M
-    model_add 10 "Qwythos-9B-v2"                    ":Q4_K_M"       "empero-ai/Qwythos-9B-v2-GGUF"
+    model_add 18    "Qwen-3.5-27B"                      ":Q4_K_M"       "unsloth/Qwen3.5-27B-GGUF"                           
+    model_options   "-c 16384 --temp 0.7 --top-p 0.8 --repeat-penalty 1.05 -fa"
+}
+
+$WANT_MODELS_CPU && {
+    # Heavyweight CPU Workloads (Requires NUMA distribution across dual Xeon sockets)
+    model_add 75    "GPT-OSS-120B"                      ":UD-Q4_K_XL"   "unsloth/gpt-oss-120b-GGUF"
+    model_options   "-c 16384 --numa distribute --temp 0.7"
+
+    model_add 45    "Llama-3.3-70B"                     ":UD-Q4_K_XL"   "unsloth/Llama-3.3-70B-Instruct-GGUF"
+    model_options   "-c 16384 --numa distribute --temp 0.6 --top-p 0.9"
+
+    model_add 45    "DeepSeek-R1-Distill-70B"           ":UD-Q4_K_XL"   "unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF"
+    model_options   "-c 16384 --numa distribute --temp 0.6 --top-p 0.95"
+
+    # CPU-only testing models
+    model_add  1    "Gemma-4-E2B-QAT-CPU"               ":UD-Q4_K_XL"   "unsloth/gemma-4-E2B-it-qat-GGUF"         
+    model_options   "-c 8192 --temp 0.7"
+
+    model_add  2    "Gemma-4-E4B-QAT-CPU"               ":UD-Q4_K_XL"   "unsloth/gemma-4-E4B-it-qat-GGUF"         
+    model_options   "-c 8192 --temp 0.7"
 }
 
 OPTIONS_LLAMA_BENCH="
