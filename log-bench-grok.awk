@@ -1,12 +1,12 @@
 #!/usr/bin/env awk
 BEGIN {
-    have_download = 0
+    have_smoke = 0
     have_benchmark = 0
     n_models = 0
     list_models[0] = ""
 }
 /^==== / {
-    if (have_download) {
+    if (have_smoke) {
         print "```"
         print ""
         print "| real | user | sys  | time |"
@@ -21,10 +21,10 @@ BEGIN {
         print "| "time_real " | " time_user " | " time_sys " |"
         print ""
     }
-    have_download = have_benchmark = 0
+    have_smoke = have_benchmark = 0
 }
-/^==== Download/ {
-    have_download = 1
+/^==== Smoke/ {
+    have_smoke = 1
 }
 /^==== Benchmark/ {
     have_benchmark = 1
@@ -39,7 +39,7 @@ BEGIN {
     model_spec = $2
 }
 /^[+] llama-completion / {
-    print "### Download - " model_family
+    print "### Smoke - " model_family
     print "| Model Family | Model Name |"
     print "| ----         | ----       |"
     print "| " model_family " | " model_name model_spec " |"

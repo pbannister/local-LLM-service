@@ -23,11 +23,13 @@ BEGIN {
     gsub(/ +$/,"", $7)
     gsub(/ +$/,"", $8)
     
-    model = $2
+    model_base = $2
     size = $3
     params = $4
     test = $7
     ts = $8
+
+    model = model_family " (" model_base ")"
 
     # Initialize data for this model if seen for the first time
     if (!(model in map_size)) {
@@ -70,14 +72,13 @@ END {
     print "| params | size   | pp512     | pp2048    | pp4096    | tg128     | family / model / spec   |"
     print "| ---:   | ---:   | ---:      | ---:      | ---:      | ---:      | ---                      |"
     for (m in map_size) {
-        printf "| %s | %s | %s | %s | %s | %s | %s <br> %s <br> %s |\n", 
+        printf "| %s | %s | %s | %s | %s | %s | %s <br> %s |\n", 
             map_params[m], 
             map_size[m], 
             results[m, "pp512"], 
             results[m, "pp2048"], 
             results[m, "pp4096"], 
             results[m, "tg128"],
-            map_family[m],
             m,
             map_spec[m] | "sort -k 2n"
     } 

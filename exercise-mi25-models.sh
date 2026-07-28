@@ -208,14 +208,6 @@ $WANT_MODELS_REASONING && {
         model_options_sampling "--temp 0.15 --top-p 0.95"
     }
 
-    # Split GPU/CPU Workload (~14.2GB GPU VRAM + ~6GB System RAM)
-    model_fits 8 14 && {
-        model_family_add "Qwen-2.5-Coder-32B" ":Q4_K_M" "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF"
-        model_options_context "-c 16384"
-        model_options_hardware "-ngl 46 $NUMA_FLAGS"
-        model_options_sampling "--temp 0.2 --top-p 0.95"
-    }
-
     # High-Speed MoE (Fits in 16GB VRAM because only 4B active parameters run per token)
     model_fits 1 15 && {
         model_family_add "Gemma-4-26B-A4B-QAT" ":UD-Q4_K_XL" "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
@@ -234,7 +226,16 @@ $WANT_MODELS_REASONING && {
 
     # Split GPU/CPU Workload (~14.2GB GPU VRAM + ~6GB System RAM)
     model_fits 8 14 && {
-        model_family_add "DeepSeek-R1-Distill-32B" ":Q4_K_M" "unsloth/DeepSeek-R1-Distill-Qwen-32B-GGUF"
+        model_family_add "Qwen-2.5-Coder-32B:GPU+CPU" ":Q4_K_M" "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF"
+        model_options_context "-c 16384"
+        model_options_hardware "-ngl 46 $NUMA_FLAGS"
+        model_options_sampling "--temp 0.2 --top-p 0.95"
+    }
+
+    # Split GPU/CPU Workload (~14.2GB GPU VRAM + ~6GB System RAM)
+    # Similar to Qwen-2.5-Coder-32B
+    false && model_fits 8 14 && {
+        model_family_add "DeepSeek-R1-Distill-32B:GPU+CPU" ":Q4_K_M" "unsloth/DeepSeek-R1-Distill-Qwen-32B-GGUF"
         model_options_context "-c 16384"
         model_options_hardware "-ngl 46 $NUMA_FLAGS"
         model_options_sampling "--temp 0.6 --top-p 0.95"
@@ -275,7 +276,7 @@ $WANT_MODELS_REASONING && {
 
     # Split GPU/CPU Workload (~13.5GB GPU VRAM + ~3.5GB System RAM)
     model_fits 6 13 && {
-        model_family_add "Qwen-3.5-27B" ":Q4_K_M" "unsloth/Qwen3.5-27B-GGUF"                           
+        model_family_add "Qwen-3.5-27B:GPU+CPU" ":Q4_K_M" "unsloth/Qwen3.5-27B-GGUF"                           
         model_options_context "-c 16384"
         model_options_hardware "-ngl 50 $NUMA_FLAGS"
         model_options_sampling "--temp 0.7 --top-p 0.8 --repeat-penalty 1.05"
@@ -289,19 +290,19 @@ $WANT_MODELS_CPU && {
     # =================================
 
     model_fits 80 0 && {
-        model_family_add "GPT-OSS-120B" ":UD-Q4_K_XL" "unsloth/gpt-oss-120b-GGUF"
+        model_family_add "GPT-OSS-120B:CPU" ":UD-Q4_K_XL" "unsloth/gpt-oss-120b-GGUF"
         model_options_context "-c 16384"
         model_options_hardware "-ngl 0 $NUMA_FLAGS"
         model_options_sampling "--temp 0.7"
     }
     model_fits 48 0 && {
-        model_family_add "Llama-3.3-70B" ":UD-Q4_K_XL" "unsloth/Llama-3.3-70B-Instruct-GGUF"
+        model_family_add "Llama-3.3-70B:CPU" ":UD-Q4_K_XL" "unsloth/Llama-3.3-70B-Instruct-GGUF"
         model_options_context "-c 16384"
         model_options_hardware "-ngl 0 $NUMA_FLAGS"
         model_options_sampling "--temp 0.6 --top-p 0.9"
     }
     model_fits 48 0 && {
-        model_family_add "DeepSeek-R1-Distill-70B" ":UD-Q4_K_XL" "unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF"
+        model_family_add "DeepSeek-R1-Distill-70B:CPU" ":UD-Q4_K_XL" "unsloth/DeepSeek-R1-Distill-Llama-70B-GGUF"
         model_options_context "-c 16384"
         model_options_hardware "-ngl 0 $NUMA_FLAGS"
         model_options_sampling "--temp 0.6 --top-p 0.95"
@@ -311,14 +312,14 @@ $WANT_MODELS_CPU && {
     # Lightweight CPU Workloads (Requires NUMA distribution across dual Xeon sockets)
     # =================================
 
-    model_fits 1 0 && {
-        model_family_add "Gemma-4-E2B-QAT-CPU" ":UD-Q4_K_XL" "unsloth/gemma-4-E2B-it-qat-GGUF"         
+    model_fits 4 0 && {
+        model_family_add "Gemma-4-E2B-QAT:CPU" ":UD-Q4_K_XL" "unsloth/gemma-4-E2B-it-qat-GGUF"         
         model_options_context "-c 8192"
         model_options_hardware "-ngl 0 $NUMA_FLAGS"
         model_options_sampling "--temp 0.7"
     }
     model_fits 2 0 && {
-        model_family_add "Gemma-4-E4B-QAT-CPU" ":UD-Q4_K_XL" "unsloth/gemma-4-E4B-it-qat-GGUF"         
+        model_family_add "Gemma-4-E4B-QAT:CPU" ":UD-Q4_K_XL" "unsloth/gemma-4-E4B-it-qat-GGUF"         
         model_options_context "-c 8192"
         model_options_hardware "-ngl 0 $NUMA_FLAGS"
         model_options_sampling "--temp 0.7"
