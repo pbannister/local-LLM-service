@@ -69,10 +69,10 @@ END {
     close("sort")
     # Define the header for our output table
     print ""
-    print "| params | size   | pp512     | pp2048    | pp4096    | tg128     | family / model / spec   |"
-    print "| ---:   | ---:   | ---:      | ---:      | ---:      | ---:      | ---                      |"
+    print "| params<br>size | pp512<br>pp2048<br>pp4096    | tg128     | family / model / spec   |"
+    print "| ---:           | ---:                         | ---:      | ---                      |"
     for (m in map_size) {
-        printf "| %s | %s | %s | %s | %s | %s | %s <br> %s |\n", 
+        printf "| %s<br>%s | %s<br>%s<br>%s | %s | %s<br>%s |\n", 
             map_params[m], 
             map_size[m], 
             results[m, "pp512"], 
@@ -82,4 +82,6 @@ END {
             m,
             map_spec[m] | "sort -k 2n"
     } 
+    close("sort -k 2n")
+    #print "| | ============== | | |"
 }
